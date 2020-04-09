@@ -37,9 +37,9 @@ plt.figure()
 plt.plot(list(range(1913)),df_sales.iloc[11][6:])
 plt.show()
 # %%
-plt.figure()
-plt.plot(df_sales.iloc[0][6:])
-plt.show()
+# plt.figure()
+# plt.plot(df_sales.iloc[0][6:])
+# plt.show()
 
 
 # %%
@@ -105,7 +105,7 @@ model.fit(X_train, y_train, epochs=5)
 
 # %%
 
-X_train = np.array(range(10))[..., np.newaxis]
+
 
 def generate_series(batch_size, n_steps):
     time = np.linspace(0, 1, n_steps)
