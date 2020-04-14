@@ -10,7 +10,6 @@ import numpy as np
 
 get_ipython().run_line_magic('matplotlib', 'inline')
 
-
 # %%
 df_sales = pd.read_csv('sales_train_validation.csv')
 df_calendar = pd.read_csv('calendar.csv')
@@ -54,14 +53,10 @@ print(item0)
 
 series0 = item0[6:]
 
-# %%
-from tensorflow import keras
-
-keras.__version__
 
 # %%
 model = keras.models.Sequential([
-    keras.layers.SimpleRNN(20, input_shape=[None, 1]),
+    keras.layers.SimpleRNN(20, input_shape=[None, 1], return_sequences=False),
     keras.layers.Dense(10),
 ])
 
@@ -84,6 +79,8 @@ def create_dataset(dataset, look_back=20, predict_next=10):
 # %%
 Xtrain, Ytrain = create_dataset(series0[:1900])
 
+print(Xtrain.shape)
+print(Ytrain.shape)
 # %%
 model.fit(Xtrain, Ytrain, epochs = 100)
 
@@ -91,10 +88,6 @@ model.fit(Xtrain, Ytrain, epochs = 100)
 #model.predict(series0[1900:1910])
 
 # %%
-X_train = np.array([[[0], [1], [2], [1]]])
-print(X_train.shape)
-y_train = np.array([[[5]]])
-print(y_train.shape)
 model = keras.models.Sequential([
     keras.layers.SimpleRNN(1, input_shape=[None, 1], return_sequences=True),
     keras.layers.Dense(1)])
@@ -105,80 +98,15 @@ model.fit(X_train, y_train, epochs=5)
 
 # %%
 
+look_forward=10
+X = series0[np.newaxis, :, np.newaxis]
+print(X.shape)
+Y = np.empty((1, len(series0) - look_forward, look_forward))
+print(Y.shape)
+
+for step_ahed in range(1, look_forward + 1):
+    Y[:, :, step_ahed-1] = X[:, step_ahed:step_ahed+len(series0)-look_forward, 0]
 
 
-def generate_series(batch_size, n_steps):
-    time = np.linspace(0, 1, n_steps)
-    series = []
-    noise= np.random.rand(batch_size) * 2 - 1
-    for i in range(batch_size):
-        series.append(np.sin(time) + 1.0*noise[i])
-    return np.array(series)[..., np.newaxis]
-
-batch_size = 3000
-n_steps = 41
-series = generate_series(batch_size, n_steps)
-print(series.shape)
-
-X = series[:, :n_steps-1, :]
-y = series[:, -1, :]
-
-# X_train = series[:2000, :n_steps-1, :]
-# y_train = series[:2000, -1, :]
-
-# X_valid = series[2000:, :n_steps-1, :]
-# y_valid = series[2000:, -1, :]
-
-from sklearn.model_selection import train_test_split
-
-X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2)
-
-model = keras.models.Sequential([
-    #reshape missing
-    keras.layers.Flatten(input_shape=[n_steps-1, 1]),
-    keras.layers.Dense(1)
-])
-
-model.compile(loss="mse", optimizer='adam')
-model.fit(X_train, y_train,
-          epochs = 1000,
-          validation_data=(X_valid, y_valid),
-          callbacks=[keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)])
-
-# %%
-
-model.evaluate(X_valid, y_valid)
-#5.54e-15
-# %%
-rnn_model = keras.models.Sequential([
-    keras.layers.SimpleRNN(4, input_shape=[n_steps-1, 1], return_sequences=True),
-    keras.layers.SimpleRNN(1)
-])
-
-rnn_model.summary()
-
-rnn_model.compile(loss="mse", optimizer='adam')
-rnn_model.fit(X_train, y_train,
-          epochs = 1000,
-          validation_data=(X_valid, y_valid),
-          callbacks=[keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)])
-
-# %%
-rnn_model.evaluate(X_valid, y_valid)
-
-
-
-# %%
-a = np.array([[[0],[1]],[[2],[3]],[[4],[5]]])[..., np.newaxis]
-print((keras.layers.Flatten()(a).shape))
-a.shape
-# %%
-
-model = keras.models.Sequential([
-    keras.layers.SimpleRNN(1, input_shape=[None, 1])
-])
-
-optimizer = keras.optimizers.Adam()
-model.compile(loss="mse", optimizer=optimizer)
 
 # %%
