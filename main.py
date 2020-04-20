@@ -73,7 +73,7 @@ for pred in range(predict_next):
 
 from sklearn.model_selection import train_test_split
 
-X_train, X_valid, Y_train, Y_valid = train_test_split(X, Y, test_size=0.2)
+X_train, X_valid, Y_train, Y_valid = train_test_split(X, Y, test_size=0.2, shuffle=False)
 
 print(X_train.shape)
 print(Y_train.shape)
@@ -84,7 +84,7 @@ print(Y_valid.shape)
 # %%
 from tensorflow import keras
 model = keras.models.Sequential([
-    keras.layers.GRU(10, input_shape=(None, 1), return_sequences=True),
+    keras.layers.GRU(10, input_shape=(None, 1), return_sequences=False),
     keras.layers.Dense(10),
 ])
 
@@ -99,10 +99,30 @@ model.fit(X_train, Y_train, validation_data=(X_valid, Y_valid),
             epochs=100, callbacks=[keras.callbacks.EarlyStopping(patience=5, restore_best_weights=True)])
 
 
-
 # %%
 
-y_pred = model.predict(X_valid)
+y_pred = model.predict(series[np.newaxis, ...])
 keras.losses.mse(Y_valid[-1],np.around(y_pred[-1]))
 # %%
+print(Y_valid[-1], np.around(y_pred[-1]))
+
+# %%
+series_test = series.astype(np.float32)
+series_test = np.repeat(series_test,5)[np.newaxis, :, np.newaxis]
+print(series_test.shape)
+model.predict(series_test)
+
+# %%
+
+plt.figure()
+plt.plot(range(1913), series)
+plt.show()
+
+# %%
+
+for n in range(1200,1210):
+    plt.figure()
+    plt.plot(range(365),X[n])
+    plt.show()
+
 # %%
