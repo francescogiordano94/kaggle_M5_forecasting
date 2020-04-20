@@ -48,15 +48,43 @@ df_calendar.iloc[-(28*2)+1:-27]
 df_sales.head()
 
 # %%
-item0 = df_sales.iloc[0]
-print(item0)
+items = df_sales.iloc[0:200]
+print(item)
+# %%
+predict_next = 10
 
-series0 = item0[6:]
+# CONTINUE HERE with the split
+series = df_sales.iloc[0][6:]
+n_steps = 365
+predict_next = 10
+n_batches = len(series) - n_steps - predict_next + 1
+## X:split in n_batches series of 365 where each series is one step ahead of the previous
+## y: the next <predict_next> elements after the corresponding series in X
+
+X = np.empty((n_batches, n_steps, 1))
+for step in range(n_steps):
+    X[:, step, 0] = series[step : n_batches + step]
+
+Y = np.empty((n_batches, predict_next))
+
+for pred in range(predict_next):
+    Y[:, pred] = series[pred + n_steps : pred + n_steps + n_batches]
+# %% 
+
+from sklearn.model_selection import train_test_split
+
+X_train, X_valid, Y_train, Y_valid = train_test_split(X, Y, test_size=0.2)
+
+print(X_train.shape)
+print(Y_train.shape)
+print(X_valid.shape)
+print(Y_valid.shape)
 
 
 # %%
+from tensorflow import keras
 model = keras.models.Sequential([
-    keras.layers.SimpleRNN(20, input_shape=[None, 1], return_sequences=False),
+    keras.layers.GRU(10, input_shape=(None, 1), return_sequences=True),
     keras.layers.Dense(10),
 ])
 
@@ -67,46 +95,14 @@ model.summary()
 # %%
 model.compile(loss="mean_squared_error", optimizer="adam")
 
+model.fit(X_train, Y_train, validation_data=(X_valid, Y_valid),
+            epochs=100, callbacks=[keras.callbacks.EarlyStopping(patience=5, restore_best_weights=True)])
 
-# %%
-def create_dataset(dataset, look_back=20, predict_next=10):
-    dataX, dataY = [], []
-    for i in range(len(dataset)-predict_next-look_back+1):
-        dataX.append(dataset[i:(i+look_back)])
-        dataY.append(dataset[(i + look_back):(i + look_back+predict_next)])
-    return np.array(dataX)[..., np.newaxis].astype(np.float32), np.atleast_3d(dataY).astype(np.float32)
 
-# %%
-Xtrain, Ytrain = create_dataset(series0[:1900])
-
-print(Xtrain.shape)
-print(Ytrain.shape)
-# %%
-model.fit(Xtrain, Ytrain, epochs = 100)
-
-# %%
-#model.predict(series0[1900:1910])
-
-# %%
-model = keras.models.Sequential([
-    keras.layers.SimpleRNN(1, input_shape=[None, 1], return_sequences=True),
-    keras.layers.Dense(1)])
-model.summary()
-model.compile(loss="mean_squared_error", optimizer="adam")
-# %%
-model.fit(X_train, y_train, epochs=5)
 
 # %%
 
-look_forward=10
-X = series0[np.newaxis, :, np.newaxis]
-print(X.shape)
-Y = np.empty((1, len(series0) - look_forward, look_forward))
-print(Y.shape)
-
-for step_ahed in range(1, look_forward + 1):
-    Y[:, :, step_ahed-1] = X[:, step_ahed:step_ahed+len(series0)-look_forward, 0]
-
-
-
+y_pred = model.predict(X_valid)
+keras.losses.mse(Y_valid[-1],np.around(y_pred[-1]))
+# %%
 # %%
