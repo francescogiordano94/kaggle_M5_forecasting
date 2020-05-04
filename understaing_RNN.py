@@ -50,8 +50,8 @@ model.evaluate(X_valid, y_valid)
 #5.54e-15
 # %%
 rnn_model = keras.models.Sequential([
-    keras.layers.SimpleRNN(4, input_shape=[None, 1], return_sequences=True),
-    keras.layers.SimpleRNN(1, return_sequences=False)
+    keras.layers.SimpleRNN(4, input_shape=[None, 1], return_sequences=False),
+    # keras.layers.SimpleRNN(1, return_sequences=False)
 ])
 
 rnn_model.summary()
